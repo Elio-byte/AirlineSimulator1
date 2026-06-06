@@ -45,7 +45,7 @@
       <div class="stats">
         <div><strong>Compagnia:</strong> <span id="companyDisplay"></span></div>
         <div><strong>Giorno:</strong> <span id="giorno">1</span></div>
-        <div><strong>Denaro:</strong> €<span id="denaro">150000000</span></div>
+        <div><strong>Denaro:</strong> €<span id="denaro">300.000.000</span></div>
         <div><strong>Aerei:</strong> <span id="numAerei">0</span></div>
         <div><strong>Reputazione:</strong> <span id="reputazione">50</span></div>
       </div>
@@ -61,7 +61,7 @@
           <option value="A320">Airbus A320neo - €48M</option>
           <option value="A350">Airbus A350-900 - €288M</option>
           <option value="B737">Boeing 737 MAX - €52M</option>
-          <option value="B777">Boeing 777 - €320M</option>
+          <option value="B777">Boeing 777-300ER - €320M</option>
         </select>
         <button class="btn-primary" style="width:100%;" onclick="compraAereo()">ACQUISTA AEREO</button>
       </div>
@@ -99,7 +99,8 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     let map, companyName = "SkyItalia";
-    let denaro = 2500000, giorno = 1, reputazione = 50;
+    let denaro = 300000000;   // ← Modificato qui (300 milioni)
+    let giorno = 1, reputazione = 50;
     let aerei = [], rotte = [];
     let markers = [];
 
@@ -129,7 +130,6 @@
       document.getElementById("gamePanel").style.display = "block";
       document.getElementById("companyDisplay").textContent = companyName;
 
-      // Popola select
       const p = document.getElementById("partenza");
       const a = document.getElementById("arrivo");
       aeroporti.forEach(city => {
@@ -139,7 +139,7 @@
       });
 
       initMap();
-      log(`✈️ Benvenuto a ${companyName}!`);
+      log(`✈️ Benvenuto a ${companyName}! Hai €300.000.000 di budget iniziale.`);
       aggiornaUI();
     }
 
@@ -151,26 +151,18 @@
     }
 
     function aggiornaMappa() {
-      // Rimuovi marker vecchi
       markers.forEach(m => map.removeLayer(m));
       markers = [];
 
-      rotte.forEach((rotta, i) => {
+      rotte.forEach(rotta => {
         const partenza = aeroporti.find(a => a.name === rotta.partenza);
         const arrivo = aeroporti.find(a => a.name === rotta.arrivo);
         if (!partenza || !arrivo) return;
 
-        // Marker partenza e arrivo
-        const startMarker = L.marker([partenza.lat, partenza.lon]).addTo(map)
-          .bindPopup(`<b>${partenza.name}</b><br>Partenza`);
-        const endMarker = L.marker([arrivo.lat, arrivo.lon]).addTo(map)
-          .bindPopup(`<b>${arrivo.name}</b><br>Arrivo`);
-
-        // Linea rotta
-        const line = L.polyline([[partenza.lat, partenza.lon], [arrivo.lat, arrivo.lon]], 
-          {color: '#4fc3f7', weight: 3, opacity: 0.7}).addTo(map);
-
-        markers.push(startMarker, endMarker, line);
+        L.marker([partenza.lat, partenza.lon]).addTo(map).bindPopup(`<b>${partenza.name}</b>`);
+        L.marker([arrivo.lat, arrivo.lon]).addTo(map).bindPopup(`<b>${arrivo.name}</b>`);
+        L.polyline([[partenza.lat, partenza.lon], [arrivo.lat, arrivo.lon]], 
+          {color: '#4fc3f7', weight: 3}).addTo(map);
       });
     }
 
@@ -252,7 +244,9 @@
       const saved = localStorage.getItem("airlineSave");
       if (saved) {
         const d = JSON.parse(saved);
-        Object.assign(this, d);
+        companyName = d.companyName || companyName;
+        denaro = d.denaro; giorno = d.giorno; reputazione = d.reputazione;
+        aerei = d.aerei || []; rotte = d.rotte || [];
         document.getElementById("companyDisplay").textContent = companyName;
         log("📂 Partita caricata");
         aggiornaUI();
