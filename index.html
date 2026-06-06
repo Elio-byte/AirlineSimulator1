@@ -4,83 +4,46 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>The Airline Simulator</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     body {
       font-family: 'Segoe UI', Arial, sans-serif;
-      background: #0a0e1a url('https://source.unsplash.com/random/1920x1080/?space,stars') no-repeat center center fixed;
-      background-size: cover;
+      background: #0a0e1a;
       color: #e0f0ff;
       margin: 0;
       padding: 10px;
     }
     .container { max-width: 1100px; margin: auto; }
-    h1 {
-      text-align: center;
-      font-size: 28px;
-      color: #4fc3f7;
-      text-shadow: 0 0 15px rgba(79, 195, 247, 0.5);
-      margin: 15px 0;
-    }
+    h1 { text-align: center; color: #4fc3f7; text-shadow: 0 0 15px rgba(79,195,247,0.5); }
     .card {
       background: rgba(15, 23, 42, 0.95);
       border-radius: 16px;
       padding: 20px;
       margin: 15px 0;
       box-shadow: 0 8px 25px rgba(0,0,0,0.4);
-      border: 1px solid rgba(79, 195, 247, 0.2);
     }
-    .stats {
-      display: flex; flex-wrap: wrap; gap: 12px; justify-content: center;
-      background: rgba(15, 35, 70, 0.9);
-      padding: 15px;
-      border-radius: 16px;
-      margin-bottom: 15px;
-    }
-    button {
-      padding: 14px 24px;
-      border: none;
-      border-radius: 12px;
-      font-weight: bold;
-      cursor: pointer;
-      font-size: 16px;
-    }
+    .stats { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; background: rgba(15, 35, 70, 0.9); padding: 15px; border-radius: 16px; }
+    button { padding: 14px 24px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; }
     .btn-primary { background: #2196f3; color: white; }
     .btn-success { background: #4caf50; color: white; }
-    input, select {
-      width: 100%;
-      padding: 14px;
-      margin: 10px 0;
-      border-radius: 12px;
-      border: none;
-      background: #1e2937;
-      color: white;
-      font-size: 16px;
-    }
-    .log {
-      height: 220px;
-      overflow-y: auto;
-      background: rgba(10, 14, 26, 0.8);
-      padding: 15px;
-      border-radius: 12px;
-      font-size: 14px;
-    }
+    input, select { width: 100%; padding: 14px; margin: 10px 0; border-radius: 12px; background: #1e2937; color: white; }
+    .log { height: 180px; overflow-y: auto; background: rgba(10,14,26,0.8); padding: 15px; border-radius: 12px; }
+    #map { height: 380px; border-radius: 12px; margin-top: 10px; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>✈️ THE AIRLINE SIMULATOR</h1>
 
-    <!-- Nome Compagnia -->
     <div id="loginPanel" class="card">
       <h2 style="text-align:center;">Crea la tua Compagnia</h2>
-      <input type="text" id="companyName" placeholder="Nome della Compagnia (es. Delta Italia)" />
+      <input type="text" id="companyName" placeholder="Nome Compagnia (es. Italia Airways)" />
       <button class="btn-primary" style="width:100%; padding:16px;" onclick="startGame()">INIZIA A GESTIRE</button>
     </div>
 
-    <!-- Schermata Principale -->
     <div id="gamePanel" style="display:none;">
       <div class="stats">
-        <div><strong>Compagnia:</strong> <span id="companyDisplay">SkyItalia</span></div>
+        <div><strong>Compagnia:</strong> <span id="companyDisplay"></span></div>
         <div><strong>Giorno:</strong> <span id="giorno">1</span></div>
         <div><strong>Denaro:</strong> €<span id="denaro">2.500.000</span></div>
         <div><strong>Aerei:</strong> <span id="numAerei">0</span></div>
@@ -88,18 +51,23 @@
       </div>
 
       <div class="card">
+        <h2>🗺️ Mappa Voli in Tempo Reale</h2>
+        <div id="map"></div>
+      </div>
+
+      <div class="card">
         <h2>🛒 Acquista Aerei</h2>
         <select id="aereoSelect">
-          <option value="A320">Airbus A320neo - €48M (150 posti)</option>
-          <option value="A350">Airbus A350-900 - €288M (300 posti)</option>
-          <option value="B737">Boeing 737 MAX - €52M (160 posti)</option>
-          <option value="B777">Boeing 777-300ER - €320M (350 posti)</option>
+          <option value="A320">Airbus A320neo - €48M</option>
+          <option value="A350">Airbus A350-900 - €288M</option>
+          <option value="B737">Boeing 737 MAX - €52M</option>
+          <option value="B777">Boeing 777 - €320M</option>
         </select>
         <button class="btn-primary" style="width:100%;" onclick="compraAereo()">ACQUISTA AEREO</button>
       </div>
 
       <div class="card">
-        <h2>🌍 Crea Nuova Rotta</h2>
+        <h2>🌍 Nuova Rotta</h2>
         <select id="partenza"></select>
         <select id="arrivo"></select>
         <select id="aereoUsato"></select>
@@ -108,9 +76,7 @@
       </div>
 
       <div class="card">
-        <button class="btn-primary" style="width:100%; padding:20px; font-size:18px;" onclick="simulaGiorno()">
-          ⏩ AVANZA GIORNO
-        </button>
+        <button class="btn-primary" style="width:100%; padding:18px;" onclick="simulaGiorno()">⏩ AVANZA GIORNO</button>
       </div>
 
       <div class="card">
@@ -119,23 +85,34 @@
       </div>
 
       <div class="card">
-        <button onclick="saveGame()" class="btn-success">💾 Salva Partita</button>
-        <button onclick="loadGame()" class="btn-primary">📂 Carica Partita</button>
+        <button onclick="saveGame()" class="btn-success">💾 Salva</button>
+        <button onclick="loadGame()" class="btn-primary">📂 Carica</button>
       </div>
 
       <div class="card">
-        <h2>Log Operativo</h2>
+        <h2>Log</h2>
         <div id="log" class="log"></div>
       </div>
     </div>
   </div>
 
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    let companyName = "SkyItalia";
+    let map, companyName = "SkyItalia";
     let denaro = 2500000, giorno = 1, reputazione = 50;
     let aerei = [], rotte = [];
+    let markers = [];
 
-    const aeroporti = ["Roma FCO","Milano MXP","Napoli NAP","Venezia VCE","Palermo PMO","Catania CTA","Bari BRI","Firenze FLR","Londra LHR","Parigi CDG","Madrid MAD","New York JFK","Los Angeles LAX"];
+    const aeroporti = [
+      {name:"Roma FCO", lat:41.80, lon:12.25},
+      {name:"Milano MXP", lat:45.63, lon:8.72},
+      {name:"Napoli NAP", lat:40.88, lon:14.29},
+      {name:"Venezia VCE", lat:45.50, lon:12.35},
+      {name:"Palermo PMO", lat:38.18, lon:13.10},
+      {name:"Londra LHR", lat:51.47, lon:-0.45},
+      {name:"Parigi CDG", lat:49.01, lon:2.55},
+      {name:"New York JFK", lat:40.64, lon:-73.78}
+    ];
 
     const market = {
       "A320": {costo: 48000000, capacita: 150, costo_op: 45000},
@@ -152,16 +129,49 @@
       document.getElementById("gamePanel").style.display = "block";
       document.getElementById("companyDisplay").textContent = companyName;
 
+      // Popola select
       const p = document.getElementById("partenza");
       const a = document.getElementById("arrivo");
       aeroporti.forEach(city => {
-        let opt = new Option(city, city);
+        let opt = new Option(city.name, city.name);
         p.add(opt.cloneNode(true));
         a.add(opt);
       });
 
-      log(`✈️ Benvenuto a bordo di ${companyName}!`);
+      initMap();
+      log(`✈️ Benvenuto a ${companyName}!`);
       aggiornaUI();
+    }
+
+    function initMap() {
+      map = L.map('map').setView([42, 12], 5);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+      }).addTo(map);
+    }
+
+    function aggiornaMappa() {
+      // Rimuovi marker vecchi
+      markers.forEach(m => map.removeLayer(m));
+      markers = [];
+
+      rotte.forEach((rotta, i) => {
+        const partenza = aeroporti.find(a => a.name === rotta.partenza);
+        const arrivo = aeroporti.find(a => a.name === rotta.arrivo);
+        if (!partenza || !arrivo) return;
+
+        // Marker partenza e arrivo
+        const startMarker = L.marker([partenza.lat, partenza.lon]).addTo(map)
+          .bindPopup(`<b>${partenza.name}</b><br>Partenza`);
+        const endMarker = L.marker([arrivo.lat, arrivo.lon]).addTo(map)
+          .bindPopup(`<b>${arrivo.name}</b><br>Arrivo`);
+
+        // Linea rotta
+        const line = L.polyline([[partenza.lat, partenza.lon], [arrivo.lat, arrivo.lon]], 
+          {color: '#4fc3f7', weight: 3, opacity: 0.7}).addTo(map);
+
+        markers.push(startMarker, endMarker, line);
+      });
     }
 
     function aggiornaUI() {
@@ -170,6 +180,7 @@
       document.getElementById("numAerei").textContent = aerei.length;
       document.getElementById("reputazione").textContent = reputazione;
       aggiornaRotte();
+      aggiornaMappa();
     }
 
     function log(msg) {
@@ -197,7 +208,7 @@
       const prezzo = parseInt(document.getElementById("prezzo").value) || 149;
 
       rotte.push({partenza, arrivo, prezzo, aereo: aerei[idx]});
-      log(`🌍 Rotta creata: ${partenza} → ${arrivo}`);
+      log(`🌍 Nuova rotta: ${partenza} → ${arrivo}`);
       aggiornaUI();
     }
 
@@ -208,7 +219,7 @@
       for (let r of rotte) {
         const a = r.aereo;
         denaro -= a.costo_op;
-        const pax = Math.floor(a.capacita * (0.6 + Math.random() * 0.35));
+        const pax = Math.floor(a.capacita * (0.62 + Math.random() * 0.33));
         const ricavo = pax * r.prezzo;
         const guadagno = ricavo - a.costo_op;
         guadagnoTot += guadagno;
@@ -217,35 +228,31 @@
 
       denaro += guadagnoTot;
       giorno++;
-
-      if (Math.random() < 0.3) {
+      if (Math.random() < 0.28) {
         reputazione = Math.min(100, reputazione + 10);
-        log("🎉 Grande successo! Reputazione aumentata.");
+        log("🎉 Successo operativo! Reputazione +10");
       }
-
       aggiornaUI();
     }
 
     function aggiornaRotte() {
       const div = document.getElementById("rotteList");
       div.innerHTML = rotte.length ? rotte.map(r => 
-        `<p>✈️ ${r.partenza} → ${r.arrivo} | ${r.aereo.tipo} | €${r.prezzo}</p>`
+        `<p>✈️ ${r.partenza} → ${r.arrivo} | ${r.aereo.tipo}</p>`
       ).join('') : "<p>Nessuna rotta attiva.</p>";
     }
 
     function saveGame() {
       const data = {companyName, denaro, giorno, reputazione, aerei, rotte};
       localStorage.setItem("airlineSave", JSON.stringify(data));
-      alert("✅ Partita salvata con successo!");
+      alert("✅ Partita salvata!");
     }
 
     function loadGame() {
       const saved = localStorage.getItem("airlineSave");
       if (saved) {
         const d = JSON.parse(saved);
-        companyName = d.companyName || companyName;
-        denaro = d.denaro; giorno = d.giorno; reputazione = d.reputazione;
-        aerei = d.aerei || []; rotte = d.rotte || [];
+        Object.assign(this, d);
         document.getElementById("companyDisplay").textContent = companyName;
         log("📂 Partita caricata");
         aggiornaUI();
