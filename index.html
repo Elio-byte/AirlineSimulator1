@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>✈️ Airline Simulator</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #0f172a; color: #e2e8f0; margin: 0; padding: 20px; }
+    .container { max-width: 1000px; margin: auto; }
+    h1 { text-align: center; color: #60a5fa; }
+    .stats { display: flex; justify-content: space-around; background: #1e2937; padding: 15px; border-radius: 10px; margin: 20px 0; }
+    .card { background: #1e2937; padding: 20px; margin: 15px 0; border-radius: 10px; }
+    button { padding: 10px 20px; margin: 5px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; }
+    .btn-primary { background: #3b82f6; color: white; }
+    .btn-success { background: #22c55e; color: white; }
+    input, select { padding: 10px; margin: 8px 0; width: 100%; border-radius: 6px; border: none; }
+    .log { height: 300px; overflow-y: auto; background: #0f172a; padding: 15px; border-radius: 8px; font-family: monospace; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>✈️ Airline Simulator</h1>
+    
+    <div class="stats">
+      <div><strong>Giorno:</strong> <span id="giorno">1</span></div>
+      <div><strong>Denaro:</strong> €<span id="denaro">1000000</span></div>
+      <div><strong>Aerei:</strong> <span id="numAerei">0</span></div>
+      <div><strong>Reputazione:</strong> <span id="reputazione">50</span>/100</div>
+    </div>
+
+    <div class="card">
+      <h2>🛒 Compra un Aereo</h2>
+      <select id="aereoSelect">
+        <option value="Cessna">Cessna - €150.000 (4 posti)</option>
+        <option value="Embraer">Embraer E195 - €2.800.000 (100 posti)</option>
+        <option value="A320">Airbus A320 - €4.500.000 (150 posti)</option>
+        <option value="B737">Boeing 737 - €5.200.000 (160 posti)</option>
+      </select>
+      <button class="btn-primary" onclick="compraAereo()">Compra Aereo</button>
+    </div>
+
+    <div class="card">
+      <h2>🌍 Crea Nuova Rotta</h2>
+      <select id="partenza"></select>
+      <select id="arrivo"></select>
+      <select id="aereoUsato"></select>
+      <input type="number" id="prezzo" placeholder="Prezzo biglietto (€)" value="89">
+      <button class="btn-success" onclick="creaRotta()">Crea Rotta</button>
+    </div>
+
+    <div class="card">
+      <h2>⏩ Simula Giorno</h2>
+      <button class="btn-primary" style="width:100%; padding:15px;" onclick="simulaGiorno()">Avanza al Giorno Successivo</button>
+    </div>
+
+    <div class="card">
+      <h2>Rotte Attive</h2>
+      <div id="rotteList"></div>
+    </div>
+
+    <div class="card">
+      <h2>Log del Gioco</h2>
+      <div id="log" class="log"></div>
+    </div>
+  </div>
+
+  <script>
+    let denaro = 1000000;
+    let giorno = 1;
+    let reputazione = 50;
+    let aerei = [];
+    let rotte = [];
+    const citta = ["Roma", "Milano", "Napoli", "Palermo", "Venezia", "Torino", "Bari", "Cagliari"];
+
+    const market = {
+      "Cessna": {costo: 150000, capacita: 4, costo_op: 800},
+      "Embraer": {costo: 2800000, capacita: 100, costo_op: 8500},
+      "A320": {costo: 4500000, capacita: 150, costo_op: 12000},
+      "B737": {costo: 5200000, capacita: 160, costo_op: 13500}
+    };
+
+    function aggiornaUI() {
+      document.getElementById("denaro").textContent = denaro.toLocaleString('it-IT');
+      document.getElementById("giorno").textContent = giorno;
+      document.getElementById("numAerei").textContent = aerei.length;
+      document.getElementById("reputazione").textContent = reputazione;
+      aggiornaRotte();
+    }
+
+    function log(messaggio) {
+      const logDiv = document.getElementById("log");
+      logDiv.innerHTML += `<div>${messaggio}</div>`;
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    function compraAereo() {
+      const nome = document.getElementById("aereoSelect").value;
+      const a = market[nome];
+      if (denaro >= a.costo) {
+        denaro -= a.costo;
+        aerei.push({...a, nome: nome, manutenzione: 100});
+        log(`✅ Hai comprato un ${nome}!`);
+        aggiornaUI();
+      } else {
+        alert("Denaro insufficiente!");
+      }
+    }
+
+    function creaRotta() {
+      if (aerei.length === 0) return alert("Compra prima un aereo!");
+      
+      const partenza = document.getElementById("partenza").value;
+      const arrivo = document.getElementById("arrivo").value;
+      const idx = document.getElementById("aereoUsato").value;
+      const prezzo = parseInt(document.getElementById("prezzo").value);
+
+      rotte.push({
+        partenza, arrivo, prezzo,
+        aereo: aerei[idx]
+      });
+      log(`🌍 Nuova rotta: ${partenza} → ${arrivo}`);
+      aggiornaUI();
+    }
+
+    function simulaGiorno() {
+      let guadagnoTot = 0;
+      log(`--- Giorno ${giorno} ---`);
+
+      for (let rotta of rotte) {
+        const a = rotta.aereo;
+        const costo = a.costo_op;
+        denaro -= costo;
+
+        const occupazione = Math.random() * 0.35 + 0.60; // 60-95%
+        const pax = Math.floor(a.capacita * occupazione);
+        const ricavo = pax * rotta.prezzo;
+        const guadagno = ricavo - costo;
+        guadagnoTot += guadagno;
+
+        log(`${rotta.partenza} → ${rotta.arrivo}: ${pax} pax | +€${guadagno.toLocaleString('it-IT')}`);
+      }
+
+      denaro += guadagnoTot;
+      giorno++;
+
+      // Evento casuale
+      if (Math.random() < 0.25) {
+        reputazione = Math.min(100, reputazione + 12);
+        log("🎉 Boom turistico! Reputazione +12");
+      }
+
+      if (denaro < -300000) {
+        alert("💥 La tua compagnia è fallita! Game Over.");
+        return;
+      }
+
+      aggiornaUI();
+    }
+
+    function aggiornaRotte() {
+      const div = document.getElementById("rotteList");
+      div.innerHTML = "";
+      rotte.forEach(r => {
+        div.innerHTML += `<p>✈️ ${r.partenza} → ${r.arrivo} | €${r.prezzo} | ${r.aereo.nome}</p>`;
+      });
+    }
+
+    // Inizializza città
+    window.onload = () => {
+      const selP = document.getElementById("partenza");
+      const selA = document.getElementById("arrivo");
+      citta.forEach(c => {
+        let opt = document.createElement("option");
+        opt.value = c; opt.textContent = c;
+        selP.appendChild(opt.cloneNode(true));
+        selA.appendChild(opt);
+      });
+      aggiornaUI();
+      log("Benvenuto in Airline Simulator! Inizia comprando un aereo.");
+    };
+  </script>
+</body>
+</html>
